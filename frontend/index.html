@@ -6,16 +6,35 @@
     <title>PocketSmart AI</title>
     <style>
         * { box-sizing: border-box; }
-        body { margin: 0; font-family: Arial, sans-serif; background: #f4f6fb; }
+        body { margin: 0; font-family: Arial, sans-serif; font-size: 18px; background: #f4f6fb; }
         .header { background: #6c5ce7; color: white; text-align: center; padding: 35px 20px; }
         .header h1 { margin: 0; font-size: 38px; }
         .header p { font-size: 18px; }
-        .container { max-width: 1000px; margin: 30px auto; padding: 20px; }
+        .container { max-width: 1200px; margin: 30px auto; padding: 20px; display: grid; grid-template-columns: 260px minmax(0, 1fr); align-items: start; gap: 20px; }
+        .sidebar { position: sticky; top: 20px; min-height: calc(100vh - 100px); padding: 22px; background: white; border-left: 3px solid #16856b; }
+        .sidebar h2 { margin: 0 0 14px; font-size: 25px; }
+        .sidebar nav { display: grid; gap: 8px; }
+        .sidebar a { display: block; padding: 12px; color: #315f56; font-size: 20px; text-decoration: none; border-radius: 4px; }
+        .sidebar a strong, .sidebar a span { display: block; }
+        .sidebar a span { margin-top: 4px; color: #425466; font-size: 16px; line-height: 1.45; }
+        .sidebar a:hover, .sidebar a:focus-visible { background: #e9f4f0; }
+        .main-content { min-width: 0; }
+        .page-view { min-width: 0; }
+        .page-intro { margin: 0 0 18px; color: #425466; font-size: 19px; line-height: 1.6; }
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 16px 0; }
+        .info-tile { min-width: 0; padding: 13px; border-left: 3px solid #d97732; background: #f4f6fb; }
+        .info-tile strong, .info-tile span { display: block; }
+        .info-tile strong { margin-bottom: 6px; color: #315f56; }
+        .info-tile span { color: #425466; font-size: 17px; line-height: 1.5; overflow-wrap: anywhere; }
+        .saved-list { display: grid; gap: 10px; margin-top: 16px; }
+        .saved-item { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding: 13px; border-bottom: 1px solid #dfe4ea; }
+        .saved-item strong { color: #315f56; }
+        .saved-item span { color: #425466; text-align: right; }
         .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.08); }
         h2 { color: #333; }
-        label { display: block; margin-top: 18px; margin-bottom: 7px; font-weight: bold; }
-        select, input, textarea { width: 100%; padding: 13px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
-        button { width: 100%; margin-top: 22px; padding: 14px; border: none; border-radius: 8px; background: #6c5ce7; color: white; font-size: 17px; cursor: pointer; }
+        label { display: block; margin-top: 18px; margin-bottom: 7px; font-size: 18px; font-weight: bold; }
+        select, input, textarea { width: 100%; padding: 13px; border: 1px solid #ddd; border-radius: 8px; font-size: 18px; }
+        button { width: 100%; margin-top: 22px; padding: 14px; border: none; border-radius: 8px; background: #6c5ce7; color: white; font-size: 18px; cursor: pointer; }
         button:hover { background: #5848d8; }
         #result { margin-top: 25px; }
         .budget { background: #eeeaff; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
@@ -25,7 +44,7 @@
         .price { font-size: 20px; font-weight: bold; }
         .loading { text-align: center; padding: 20px; }
         .error { background: #ffe5e5; color: red; padding: 15px; border-radius: 8px; }
-        .saved-plans { margin-top: 24px; }
+        .saved-plans { margin-top: 0; }
         .saved-controls, .result-actions { display: flex; flex-wrap: wrap; gap: 10px; }
         .saved-controls select { flex: 1 1 240px; }
         .saved-controls button, .result-actions button { width: auto; flex: 1 1 160px; margin-top: 0; }
@@ -34,7 +53,7 @@
         .secondary-button:hover { background: #273746; }
         .budget-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 16px 0; }
         .budget-stat { padding: 12px; background: rgba(255,255,255,0.75); border-radius: 8px; }
-        .budget-stat strong { display: block; margin-top: 5px; font-size: 18px; }
+        .budget-stat strong { display: block; margin-top: 5px; font-size: 20px; }
         .budget-track, .allocation-track { height: 10px; overflow: hidden; background: #dfe4ea; border-radius: 999px; }
         .budget-fill, .allocation-fill { height: 100%; background: #16856b; transition: width 180ms ease; }
         .budget-fill.over-budget { background: #c0392b; }
@@ -43,10 +62,16 @@
         .allocation-fill { background: #d97732; }
         .product-link { display: inline-block; margin-top: 8px; color: #315f9b; font-weight: bold; }
         .status { min-height: 1.4em; color: #425466; }
+        .empty-state { color: #425466; line-height: 1.6; }
+        #print-content { display: none; }
         [hidden] { display: none !important; }
         @media (max-width: 520px) {
             .header h1 { font-size: 30px; }
-            .container { margin: 14px auto; padding: 12px; }
+            .container { grid-template-columns: 1fr; gap: 14px; margin: 14px auto; padding: 12px; }
+            .sidebar { position: static; min-height: 0; padding: 14px; }
+            .saved-item { display: grid; gap: 4px; }
+            .saved-item span { text-align: left; }
+            .sidebar nav { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
             .card { padding: 18px; }
             .allocation-row { grid-template-columns: 1fr auto; }
             .allocation-track { grid-column: 1 / -1; grid-row: 2; }
@@ -55,8 +80,9 @@
             body { background: white; }
             .header { padding: 12px; background: white; color: black; }
             .container { max-width: none; margin: 0; padding: 0; }
-            .card, .saved-plans, .no-print { display: none !important; }
-            #result { margin: 0; }
+            .card, .saved-plans, .no-print, .sidebar { display: none !important; }
+            body.printing-plan .header, body.printing-plan .container { display: none !important; }
+            body.printing-plan #print-content { display: block !important; padding: 24px; }
             .product { break-inside: avoid; }
         }
     </style>
@@ -68,75 +94,134 @@
     </header>
 
     <main class="container">
-        <section class="card">
-            <h2>Choose Your Planner</h2>
+        <aside class="sidebar" aria-label="Features">
+            <h2>Features</h2>
+            <nav aria-label="App features">
+                <a href="#planner"><strong>Budget planner</strong><span>Choose a plan type, budget, and requirements.</span></a>
+                <a href="#budget"><strong>Budget tracking</strong><span>See estimates, remaining funds, and category allocations.</span></a>
+                <a href="#saved"><strong>Saved plans</strong><span>Review saved budgets and reopen a plan.</span></a>
+                <a href="#export"><strong>Export or print</strong><span>Save plan data as JSON or a printable PDF.</span></a>
+                <a href="#products"><strong>Product search</strong><span>Compare recommendations, prices, and retailers.</span></a>
+            </nav>
+        </aside>
 
-            <label for="planner">Planner</label>
-            <select id="planner">
-                <option value="Home Interior">Home Interior Planner</option>
-                <option value="Party Planner">Party Budget Planner</option>
-                <option value="Jewelry Planner">Jewelry Budget Planner</option>
-            </select>
-
-            <label for="budget">Budget (₹)</label>
-            <input type="number" id="budget" placeholder="Enter your budget" min="1">
-
-            <label for="details">Requirements</label>
-            <textarea id="details" rows="4" placeholder="Example: Living room, bedroom, lights, fan, dining table"></textarea>
-
-            <button id="recommend-button" type="button">Get AI Recommendations</button>
-        </section>
-
-        <section class="saved-plans card no-print" aria-labelledby="saved-heading">
-            <h2 id="saved-heading">Saved Plans</h2>
-            <div class="saved-controls">
-                <select id="saved-plan-select" aria-label="Choose a saved plan">
-                    <option value="">No saved plans yet</option>
+        <div class="main-content">
+            <section id="page-planner" class="page-view card" data-page="planner">
+                <h2>Budget Planner</h2>
+                <p class="page-intro">Choose a planning area and set a spending limit. Your plan will include estimated costs and category allocations.</p>
+                <div class="info-grid" aria-label="Available planning areas">
+                    <div class="info-tile"><strong>Home Interior</strong><span>Furniture, lighting, decor, and accessories</span></div>
+                    <div class="info-tile"><strong>Party</strong><span>Catering, decoration, entertainment, and other costs</span></div>
+                    <div class="info-tile"><strong>Jewelry</strong><span>Necklaces, earrings, bangles, and accessories</span></div>
+                </div>
+                <label for="planner">Planner</label>
+                <select id="planner">
+                    <option value="Home Interior">Home Interior Planner</option>
+                    <option value="Party Planner">Party Budget Planner</option>
+                    <option value="Jewelry Planner">Jewelry Budget Planner</option>
                 </select>
-                <button id="load-plan-button" class="secondary-button" type="button" disabled>Load Plan</button>
-                <button id="delete-plan-button" class="secondary-button" type="button" disabled>Delete Plan</button>
-            </div>
-            <p id="saved-status" class="status" aria-live="polite"></p>
-        </section>
+                <label for="budget">Budget (₹)</label>
+                <input type="number" id="budget" placeholder="Enter your budget" min="1">
+                <label for="details">Requirements</label>
+                <textarea id="details" rows="4" placeholder="Example: Living room, bedroom, lights, fan, dining table"></textarea>
+                <button id="recommend-button" type="button">Get AI Recommendations</button>
+                <p id="recommendation-status" class="status" aria-live="polite"></p>
+                <div id="recommendation-error" class="error" role="alert" hidden></div>
+            </section>
 
-        <div id="result-actions" class="result-actions no-print" hidden>
-            <button id="save-plan-button" type="button">Save Plan</button>
-            <button id="download-plan-button" class="secondary-button" type="button">Download JSON</button>
-            <button id="print-plan-button" class="secondary-button" type="button">Print / Save PDF</button>
+            <section id="page-budget" class="page-view card" data-page="budget" hidden>
+                <h2>Budget Tracking</h2>
+                <p class="page-intro">Compare estimated costs with your limit and review how the budget is divided across categories.</p>
+                <div id="budget-plan-context" class="info-grid"></div>
+                <div id="budget-result" aria-live="polite"><p class="empty-state">Create or load a plan to see its budget tracking. <a href="#planner">Start a plan</a>.</p></div>
+            </section>
+
+            <section id="page-saved" class="page-view card saved-plans" data-page="saved" aria-labelledby="saved-heading" hidden>
+                <h2 id="saved-heading">Saved Plans</h2>
+                <p class="page-intro">Plans are stored in this browser. Load one to review its budget, products, or export options.</p>
+                <div id="saved-plan-summary" class="info-grid" aria-live="polite"></div>
+                <div class="saved-controls">
+                    <select id="saved-plan-select" aria-label="Choose a saved plan">
+                        <option value="">No saved plans yet</option>
+                    </select>
+                    <button id="load-plan-button" class="secondary-button" type="button" disabled>Load Plan</button>
+                    <button id="delete-plan-button" class="secondary-button" type="button" disabled>Delete Plan</button>
+                </div>
+                <h3>Saved plan details</h3>
+                <div id="saved-plan-list" class="saved-list" aria-live="polite"></div>
+                <p id="saved-status" class="status" aria-live="polite"></p>
+            </section>
+
+            <section id="page-export" class="page-view card" data-page="export" hidden>
+                <h2>Export or Print</h2>
+                <p class="page-intro">The JSON download contains the full plan data. Print or save a readable summary as PDF.</p>
+                <div class="info-grid" aria-label="Export format details">
+                    <div class="info-tile"><strong>JSON</strong><span>Planner, requirements, budget, allocations, and recommendations</span></div>
+                    <div class="info-tile"><strong>PDF / print</strong><span>A readable budget summary with category allocations and products</span></div>
+                </div>
+                <p id="export-plan-status" class="empty-state">Create or load a plan to save, download, or print it.</p>
+                <div id="export-plan-details" class="info-grid"></div>
+                <div class="result-actions">
+                    <button id="save-plan-button" type="button" disabled>Save Plan</button>
+                    <button id="download-plan-button" class="secondary-button" type="button" disabled>Download JSON</button>
+                    <button id="print-plan-button" class="secondary-button" type="button" disabled>Print / Save PDF</button>
+                </div>
+            </section>
+
+            <section id="page-products" class="page-view card" data-page="products" hidden>
+                <h2>Product Search</h2>
+                <p class="page-intro">Compare recommended items by category, estimated price, and suggested retailer.</p>
+                <p id="product-summary" class="empty-state">No product list loaded.</p>
+                <h3>Category breakdown</h3>
+                <div id="product-category-summary" class="info-grid"></div>
+                <h3>Recommended items</h3>
+                <div id="products-result" aria-live="polite"><p class="empty-state">Generate or load a plan to see product recommendations. <a href="#planner">Start a plan</a>.</p></div>
+            </section>
         </div>
-        <div id="result" aria-live="polite"></div>
     </main>
+    <div id="print-content" aria-hidden="true"></div>
 
     <script>
-        const resultElement = document.getElementById("result");
+        const budgetResultElement = document.getElementById("budget-result");
+        const productsResultElement = document.getElementById("products-result");
+        const printContentElement = document.getElementById("print-content");
         const savedPlansKey = "pocketsmart.savedPlans.v1";
+        const pageNames = new Set(["planner", "budget", "saved", "export", "products"]);
         let currentPlan = null;
 
         document.getElementById("recommend-button").addEventListener("click", getRecommendations);
         document.getElementById("save-plan-button").addEventListener("click", saveCurrentPlan);
         document.getElementById("download-plan-button").addEventListener("click", downloadCurrentPlan);
-        document.getElementById("print-plan-button").addEventListener("click", () => window.print());
+        document.getElementById("print-plan-button").addEventListener("click", printCurrentPlan);
         document.getElementById("saved-plan-select").addEventListener("change", updateSavedPlanButtons);
         document.getElementById("load-plan-button").addEventListener("click", loadSelectedPlan);
         document.getElementById("delete-plan-button").addEventListener("click", deleteSelectedPlan);
+        window.addEventListener("hashchange", renderPage);
+        renderPage();
         renderSavedPlans();
 
         async function getRecommendations() {
             const planner = document.getElementById("planner").value;
             const budget = Number(document.getElementById("budget").value);
             const details = document.getElementById("details").value.trim();
+            const button = document.getElementById("recommend-button");
+            const status = document.getElementById("recommendation-status");
+            const errorElement = document.getElementById("recommendation-error");
 
             if (!Number.isFinite(budget) || budget <= 0) {
-                alert("Please enter a valid budget");
+                errorElement.textContent = "Please enter a valid budget.";
+                errorElement.hidden = false;
                 return;
             }
             if (!details) {
-                alert("Please enter your requirements");
+                errorElement.textContent = "Please enter your requirements.";
+                errorElement.hidden = false;
                 return;
             }
 
-            document.getElementById("result-actions").hidden = true;
-            resultElement.innerHTML = "<div class='loading'>AI is preparing recommendations...</div>";
+            errorElement.hidden = true;
+            status.textContent = "Preparing recommendations...";
+            button.disabled = true;
 
             try {
                 const response = await fetch("/recommend", {
@@ -158,10 +243,17 @@
                     result: data
                 };
                 showResult(currentPlan);
-                document.getElementById("result-actions").hidden = false;
+                setPlanActionsEnabled(true);
                 document.getElementById("save-plan-button").textContent = "Save Plan";
+                document.getElementById("export-plan-status").textContent = `Ready to export: ${planner} plan.`;
+                status.textContent = "Plan ready.";
+                window.location.hash = "budget";
             } catch (error) {
-                resultElement.innerHTML = `<div class="error">${escapeHtml(error.message || "Unable to connect to backend.")}</div>`;
+                errorElement.textContent = error.message || "Unable to connect to the recommendation service.";
+                errorElement.hidden = false;
+                status.textContent = "";
+            } finally {
+                button.disabled = false;
             }
         }
 
@@ -173,7 +265,7 @@
             const remaining = budget - estimatedTotal;
             const spentPercent = budget > 0 ? Math.min(100, Math.max(0, estimatedTotal / budget * 100)) : 0;
             const fillClass = remaining < 0 ? "budget-fill over-budget" : "budget-fill";
-            let html = `<section class="budget">
+            let budgetHtml = `<section class="budget">
                 <h2>Budget Summary</h2>
                 <div class="budget-stats">
                     <div class="budget-stat">Budget<strong>₹${escapeHtml(budget)}</strong></div>
@@ -185,24 +277,32 @@
                 </div>`;
 
             if (data.allocation && typeof data.allocation === "object") {
-                html += "<h3>Budget Allocation</h3><div class='allocation-list'>";
+                budgetHtml += "<h3>Budget Allocation</h3><div class='allocation-list'>";
                 for (const [category, amountValue] of Object.entries(data.allocation)) {
                     const amount = Number(amountValue) || 0;
                     const width = budget > 0 ? Math.min(100, Math.max(0, amount / budget * 100)) : 0;
-                    html += `<div class="allocation-row">
+                    budgetHtml += `<div class="allocation-row">
                         <b>${escapeHtml(category)}</b>
                         <div class="allocation-track" aria-hidden="true"><div class="allocation-fill" style="width:${width}%"></div></div>
                         <span>₹${escapeHtml(amount)}</span>
                     </div>`;
                 }
-                html += "</div>";
+                budgetHtml += "</div>";
             }
-            html += "</section><h2>Recommendations</h2><div class='products'>";
+            budgetHtml += "</section>";
+            budgetHtml += `<p class="page-intro">Estimated recommendations use ${Math.round(spentPercent)}% of this budget. ${remaining < 0 ? `The plan is ${escapeHtml(Math.abs(remaining))} over budget.` : `${escapeHtml(remaining)} remains.`}</p>`;
+            let productsHtml = "<div class='products'>";
+            const categoryTotals = new Map();
 
             for (const item of recommendations) {
                 const name = item.name || "Recommendation";
                 const platform = item.platform || "Search online";
-                html += `<article class="product">
+                const category = item.category || "Other";
+                const categoryTotal = categoryTotals.get(category) || { count: 0, total: 0 };
+                categoryTotal.count += 1;
+                categoryTotal.total += Number(item.price) || 0;
+                categoryTotals.set(category, categoryTotal);
+                productsHtml += `<article class="product">
                     <h3>${escapeHtml(name)}</h3>
                     <p><b>Category:</b> ${escapeHtml(item.category || "Uncategorized")}</p>
                     <p><b>Platform:</b> ${escapeHtml(platform)}</p>
@@ -212,7 +312,55 @@
                 </article>`;
             }
 
-            resultElement.innerHTML = `${html}</div>`;
+            productsHtml += recommendations.length ? "</div>" : "<p class='empty-state'>No product recommendations were returned for this plan.</p></div>";
+            const platforms = [...new Set(recommendations.map(item => item.platform).filter(Boolean))];
+            document.getElementById("product-category-summary").innerHTML = categoryTotals.size
+                ? [...categoryTotals].map(([category, summary]) => `<div class="info-tile"><strong>${escapeHtml(category)}</strong><span>${summary.count} items · ₹${escapeHtml(summary.total)} estimated</span></div>`).join("")
+                : "<p class='empty-state'>No category totals are available for this plan.</p>";
+            document.getElementById("budget-plan-context").innerHTML = `
+                <div class="info-tile"><strong>Planner</strong><span>${escapeHtml(plan.planner)}</span></div>
+                <div class="info-tile"><strong>Requirements</strong><span>${escapeHtml(plan.details)}</span></div>`;
+            document.getElementById("export-plan-details").innerHTML = `
+                <div class="info-tile"><strong>Planner</strong><span>${escapeHtml(plan.planner)}</span></div>
+                <div class="info-tile"><strong>Budget</strong><span>₹${escapeHtml(budget)}</span></div>
+                <div class="info-tile"><strong>Recommendations</strong><span>${recommendations.length} items</span></div>
+                <div class="info-tile"><strong>Created</strong><span>${escapeHtml(new Date(plan.createdAt).toLocaleString())}</span></div>
+                <div class="info-tile"><strong>Requirements</strong><span>${escapeHtml(plan.details)}</span></div>`;
+            document.getElementById("product-summary").textContent = `${recommendations.length} recommended items across ${platforms.length} suggested retailers${platforms.length ? `: ${platforms.join(", ")}` : ""}.`;
+            budgetResultElement.innerHTML = budgetHtml;
+            productsResultElement.innerHTML = productsHtml;
+            printContentElement.innerHTML = `<h1>${escapeHtml(plan.planner)} Budget Plan</h1>${budgetHtml}<h2>Recommendations</h2>${productsHtml}`;
+        }
+
+        function renderPage() {
+            let page = window.location.hash.slice(1);
+            if (!pageNames.has(page)) {
+                page = "planner";
+                if (window.location.hash) window.history.replaceState(null, "", "#planner");
+            }
+            document.querySelectorAll("[data-page]").forEach(view => {
+                view.hidden = view.dataset.page !== page;
+            });
+            document.querySelectorAll(".sidebar nav a").forEach(link => {
+                if (link.hash === `#${page}`) link.setAttribute("aria-current", "page");
+                else link.removeAttribute("aria-current");
+            });
+            window.scrollTo(0, 0);
+        }
+
+        function setPlanActionsEnabled(enabled) {
+            for (const id of ["save-plan-button", "download-plan-button", "print-plan-button"]) {
+                document.getElementById(id).disabled = !enabled;
+            }
+        }
+
+        function printCurrentPlan() {
+            if (!currentPlan) return;
+            document.body.classList.add("printing-plan");
+            window.addEventListener("afterprint", () => {
+                document.body.classList.remove("printing-plan");
+            }, { once: true });
+            window.print();
         }
 
         function productSearchUrl(name, platform) {
@@ -240,6 +388,13 @@
         function renderSavedPlans() {
             const select = document.getElementById("saved-plan-select");
             const plans = readSavedPlans();
+            const latestPlan = plans[0];
+            document.getElementById("saved-plan-summary").innerHTML = `
+                <div class="info-tile"><strong>Plans saved</strong><span>${plans.length} of 30</span></div>
+                <div class="info-tile"><strong>Most recent</strong><span>${latestPlan ? `${escapeHtml(latestPlan.planner)} · ${escapeHtml(new Date(latestPlan.createdAt).toLocaleString())}` : "No plans saved yet"}</span></div>`;
+            document.getElementById("saved-plan-list").innerHTML = plans.length
+                ? plans.map(plan => `<div class="saved-item"><strong>${escapeHtml(plan.planner)}</strong><span>₹${escapeHtml(plan.budget)} · ${escapeHtml(new Date(plan.createdAt).toLocaleString())}</span></div>`).join("")
+                : "<p class='empty-state'>Saved plans will appear here with their budget and creation date.</p>";
             select.innerHTML = plans.length ? "<option value=''>Choose a saved plan</option>" : "<option value=''>No saved plans yet</option>";
             for (const plan of plans) {
                 const date = new Date(plan.createdAt).toLocaleString();
@@ -263,8 +418,10 @@
                 renderSavedPlans();
                 document.getElementById("saved-status").textContent = "Plan saved in this browser.";
                 document.getElementById("save-plan-button").textContent = "Plan Saved";
+                document.getElementById("export-plan-status").textContent = "Plan saved in this browser.";
             } catch {
                 document.getElementById("saved-status").textContent = "Unable to save. Browser storage may be full or disabled.";
+                document.getElementById("export-plan-status").textContent = "Unable to save. Browser storage may be full or disabled.";
             }
         }
 
@@ -276,8 +433,10 @@
             document.getElementById("budget").value = currentPlan.budget;
             document.getElementById("details").value = currentPlan.details;
             showResult(currentPlan);
-            document.getElementById("result-actions").hidden = false;
+            setPlanActionsEnabled(true);
             document.getElementById("save-plan-button").textContent = "Plan Saved";
+            document.getElementById("export-plan-status").textContent = `Ready to export: ${currentPlan.planner} plan.`;
+            window.location.hash = "budget";
         }
 
         function deleteSelectedPlan() {
