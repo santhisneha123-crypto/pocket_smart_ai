@@ -1,6 +1,6 @@
 # PocketSmart AI
 
-A budget-planning app with a FastAPI backend and a standalone HTML frontend.
+A budget-planning app with a FastAPI backend and a standalone HTML frontend, deployable to Vercel.
 
 ## Features
 
@@ -11,9 +11,11 @@ A budget-planning app with a FastAPI backend and a standalone HTML frontend.
 
 ## Project files
 
-- `backend/main.py`: serves the frontend and provides recommendation and outfit-upload APIs.
+- `app.py`: Vercel FastAPI entrypoint; imports the application from the backend package.
+- `backend/main.py`: serves the frontend and provides the recommendation API.
 - `frontend/index.html`: browser interface.
 - `backend/__init__.py`: marks the backend as an importable Python package.
+- `vercel.json`: Vercel Function settings.
 - `.env`: local configuration; keep API keys here and do not commit this file.
 - `.env.example`: environment-variable template.
 - `requirements.txt`: Python dependencies.
@@ -52,4 +54,13 @@ A budget-planning app with a FastAPI backend and a standalone HTML frontend.
 ## API
 
 - `POST /recommend`: accepts a planner, budget, and requirements; returns recommendations.
+
 Saved plans remain in the current browser and are not uploaded to the server.
+
+## Deploy to Vercel
+
+1. Push the project to GitHub and import the repository in Vercel. Keep the project root as the Vercel Root Directory.
+2. Add `GEMINI_API_KEY` in the Vercel project's Environment Variables for the environments you use. Do not upload `.env`; it is ignored by Git.
+3. Deploy. Vercel detects the FastAPI application through the root `app.py` entrypoint and installs packages from `requirements.txt`.
+
+The same deployment can also be started with the Vercel CLI from the project root using `vercel`.
