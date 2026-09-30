@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PocketSmart AI</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: Arial, sans-serif; background: #f4f6fb; }
+        .header { background: #6c5ce7; color: white; text-align: center; padding: 35px 20px; }
+        .header h1 { margin: 0; font-size: 38px; }
+        .header p { font-size: 18px; }
+        .container { max-width: 1000px; margin: 30px auto; padding: 20px; }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.08); }
+        h2 { color: #333; }
+        label { display: block; margin-top: 18px; margin-bottom: 7px; font-weight: bold; }
+        select, input, textarea { width: 100%; padding: 13px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
+        button { width: 100%; margin-top: 22px; padding: 14px; border: none; border-radius: 8px; background: #6c5ce7; color: white; font-size: 17px; cursor: pointer; }
+        button:hover { background: #5848d8; }
+        #result { margin-top: 25px; }
+        .budget { background: #eeeaff; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+        .products { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; }
+        .product { background: white; padding: 18px; border-radius: 12px; border: 1px solid #ddd; }
+        .product h3 { color: #6c5ce7; }
+        .price { font-size: 20px; font-weight: bold; }
+        .loading { text-align: center; padding: 20px; }
+        .error { background: #ffe5e5; color: red; padding: 15px; border-radius: 8px; }
+        .saved-plans { margin-top: 24px; }
+        .saved-controls, .result-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+        .saved-controls select { flex: 1 1 240px; }
+        .saved-controls button, .result-actions button { width: auto; flex: 1 1 160px; margin-top: 0; }
+        .result-actions { margin: 22px 0 14px; }
+        .secondary-button { background: #34495e; }
+        .secondary-button:hover { background: #273746; }
+        .budget-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 16px 0; }
+        .budget-stat { padding: 12px; background: rgba(255,255,255,0.75); border-radius: 8px; }
+        .budget-stat strong { display: block; margin-top: 5px; font-size: 18px; }
+        .budget-track, .allocation-track { height: 10px; overflow: hidden; background: #dfe4ea; border-radius: 999px; }
+        .budget-fill, .allocation-fill { height: 100%; background: #16856b; transition: width 180ms ease; }
+        .budget-fill.over-budget { background: #c0392b; }
+        .allocation-list { display: grid; gap: 10px; }
+        .allocation-row { display: grid; grid-template-columns: minmax(100px, 1fr) minmax(100px, 2fr) auto; align-items: center; gap: 12px; }
+        .allocation-fill { background: #d97732; }
+        .product-link { display: inline-block; margin-top: 8px; color: #315f9b; font-weight: bold; }
+        .status { min-height: 1.4em; color: #425466; }
+        [hidden] { display: none !important; }
+        @media (max-width: 520px) {
+            .header h1 { font-size: 30px; }
+            .container { margin: 14px auto; padding: 12px; }
+            .card { padding: 18px; }
+            .allocation-row { grid-template-columns: 1fr auto; }
+            .allocation-track { grid-column: 1 / -1; grid-row: 2; }
+        }
+        @media print {
+            body { background: white; }
+            .header { padding: 12px; background: white; color: black; }
+            .container { max-width: none; margin: 0; padding: 0; }
+            .card, .saved-plans, .no-print { display: none !important; }
+            #result { margin: 0; }
+            .product { break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>PocketSmart AI</h1>
+        <p>AI-Powered Smart Budget Recommendation System</p>
+    </header>
+
+    <main class="container">
+        <section class="card">
+            <h2>Choose Your Planner</h2>
+
+            <label for="planner">Planner</label>
+            <select id="planner">
+                <option value="Home Interior">Home Interior Planner</option>
+                <option value="Party Planner">Party Budget Planner</option>
+                <option value="Jewelry Planner">Jewelry Budget Planner</option>
+            </select>
+
+            <label for="budget">Budget (₹)</label>
+            <input type="number" id="budget" placeholder="Enter your budget" min="1">
+
+            <label for="details">Requirements</label>
+            <textarea id="details" rows="4" placeholder="Example: Living room, bedroom, lights, fan, dining table"></textarea>
+
+            <button id="recommend-button" type="button">Get AI Recommendations</button>
+        </section>
+
+        <section class="saved-plans card no-print" aria-labelledby="saved-heading">
+            <h2 id="saved-heading">Saved Plans</h2>
+            <div class="saved-controls">
+                <select id="saved-plan-select" aria-label="Choose a saved plan">
+                    <option value="">No saved plans yet</option>
+                </select>
+                <button id="load-plan-button" class="secondary-button" type="button" disabled>Load Plan</button>
+                <button id="delete-plan-button" class="secondary-button" type="button" disabled>Delete Plan</button>
+            </div>
+            <p id="saved-status" class="status" aria-live="polite"></p>
+        </section>
+
+        <div id="result-actions" class="result-actions no-print" hidden>
+            <button id="save-plan-button" type="button">Save Plan</button>
+            <button id="download-plan-button" class="secondary-button" type="button">Download JSON</button>
+            <button id="print-plan-button" class="secondary-button" type="button">Print / Save PDF</button>
+        </div>
+        <div id="result" aria-live="polite"></div>
+    </main>
+
+    <script>
+        const resultElement = document.getElementById("result");
+        const savedPlansKey = "pocketsmart.savedPlans.v1";
+        let currentPlan = null;
+
+        document.getElementById("recommend-button").addEventListener("click", getRecommendations);
+        document.getElementById("save-plan-button").addEventListener("click", saveCurrentPlan);
+        document.getElementById("download-plan-button").addEventListener("click", downloadCurrentPlan);
+        document.getElementById("print-plan-button").addEventListener("click", () => window.print());
+        document.getElementById("saved-plan-select").addEventListener("change", updateSavedPlanButtons);
+        document.getElementById("load-plan-button").addEventListener("click", loadSelectedPlan);
+        document.getElementById("delete-plan-button").addEventListener("click", deleteSelectedPlan);
+        renderSavedPlans();
+
+        async function getRecommendations() {
+            const planner = document.getElementById("planner").value;
+            const budget = Number(document.getElementById("budget").value);
+            const details = document.getElementById("details").value.trim();
+
+            if (!Number.isFinite(budget) || budget <= 0) {
+                alert("Please enter a valid budget");
+                return;
+            }
+            if (!details) {
+                alert("Please enter your requirements");
+                return;
+            }
+
+            document.getElementById("result-actions").hidden = true;
+            resultElement.innerHTML = "<div class='loading'>AI is preparing recommendations...</div>";
+
+            try {
+                const response = await fetch("/recommend", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ planner, budget, details: { requirements: details } })
+                });
+                const data = await response.json();
+
+                if (!response.ok || data.error) {
+                    throw new Error(data.error || "Unable to get recommendations.");
+                }
+                currentPlan = {
+                    id: createPlanId(),
+                    createdAt: new Date().toISOString(),
+                    planner,
+                    budget,
+                    details,
+                    result: data
+                };
+                showResult(currentPlan);
+                document.getElementById("result-actions").hidden = false;
+                document.getElementById("save-plan-button").textContent = "Save Plan";
+            } catch (error) {
+                resultElement.innerHTML = `<div class="error">${escapeHtml(error.message || "Unable to connect to backend.")}</div>`;
+            }
+        }
+
+        function showResult(plan) {
+            const data = plan.result || {};
+            const recommendations = Array.isArray(data.recommendations) ? data.recommendations : [];
+            const budget = Number(data.budget) || Number(plan.budget) || 0;
+            const estimatedTotal = recommendations.reduce((total, item) => total + (Number(item.price) || 0), 0);
+            const remaining = budget - estimatedTotal;
+            const spentPercent = budget > 0 ? Math.min(100, Math.max(0, estimatedTotal / budget * 100)) : 0;
+            const fillClass = remaining < 0 ? "budget-fill over-budget" : "budget-fill";
+            let html = `<section class="budget">
+                <h2>Budget Summary</h2>
+                <div class="budget-stats">
+                    <div class="budget-stat">Budget<strong>₹${escapeHtml(budget)}</strong></div>
+                    <div class="budget-stat">Estimated products<strong>₹${escapeHtml(estimatedTotal)}</strong></div>
+                    <div class="budget-stat">${remaining < 0 ? "Over budget" : "Remaining"}<strong>₹${escapeHtml(Math.abs(remaining))}</strong></div>
+                </div>
+                <div class="budget-track" role="progressbar" aria-label="Estimated spending compared with budget" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(spentPercent)}">
+                    <div class="${fillClass}" style="width:${spentPercent}%"></div>
+                </div>`;
+
+            if (data.allocation && typeof data.allocation === "object") {
+                html += "<h3>Budget Allocation</h3><div class='allocation-list'>";
+                for (const [category, amountValue] of Object.entries(data.allocation)) {
+                    const amount = Number(amountValue) || 0;
+                    const width = budget > 0 ? Math.min(100, Math.max(0, amount / budget * 100)) : 0;
+                    html += `<div class="allocation-row">
+                        <b>${escapeHtml(category)}</b>
+                        <div class="allocation-track" aria-hidden="true"><div class="allocation-fill" style="width:${width}%"></div></div>
+                        <span>₹${escapeHtml(amount)}</span>
+                    </div>`;
+                }
+                html += "</div>";
+            }
+            html += "</section><h2>Recommendations</h2><div class='products'>";
+
+            for (const item of recommendations) {
+                const name = item.name || "Recommendation";
+                const platform = item.platform || "Search online";
+                html += `<article class="product">
+                    <h3>${escapeHtml(name)}</h3>
+                    <p><b>Category:</b> ${escapeHtml(item.category || "Uncategorized")}</p>
+                    <p><b>Platform:</b> ${escapeHtml(platform)}</p>
+                    <p class="price">₹${escapeHtml(Number(item.price) || 0)}</p>
+                    <p>${escapeHtml(item.reason || "")}</p>
+                    <a class="product-link" href="${productSearchUrl(name, platform)}" target="_blank" rel="noopener noreferrer">Search product ↗</a>
+                </article>`;
+            }
+
+            resultElement.innerHTML = `${html}</div>`;
+        }
+
+        function productSearchUrl(name, platform) {
+            const domains = {
+                amazon: "site:amazon.in",
+                flipkart: "site:flipkart.com",
+                ikea: "site:ikea.com/in/en",
+                swiggy: "site:swiggy.com",
+                oyo: "site:oyorooms.com"
+            };
+            const site = domains[String(platform).trim().toLowerCase()] || "";
+            const query = [name, site].filter(Boolean).join(" ");
+            return `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+        }
+
+        function readSavedPlans() {
+            try {
+                const plans = JSON.parse(localStorage.getItem(savedPlansKey) || "[]");
+                return Array.isArray(plans) ? plans : [];
+            } catch {
+                return [];
+            }
+        }
+
+        function renderSavedPlans() {
+            const select = document.getElementById("saved-plan-select");
+            const plans = readSavedPlans();
+            select.innerHTML = plans.length ? "<option value=''>Choose a saved plan</option>" : "<option value=''>No saved plans yet</option>";
+            for (const plan of plans) {
+                const date = new Date(plan.createdAt).toLocaleString();
+                select.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(plan.id)}">${escapeHtml(plan.planner)} · ${escapeHtml(date)}</option>`);
+            }
+            updateSavedPlanButtons();
+        }
+
+        function updateSavedPlanButtons() {
+            const hasSelection = Boolean(document.getElementById("saved-plan-select").value);
+            document.getElementById("load-plan-button").disabled = !hasSelection;
+            document.getElementById("delete-plan-button").disabled = !hasSelection;
+        }
+
+        function saveCurrentPlan() {
+            if (!currentPlan) return;
+            try {
+                const plans = readSavedPlans().filter(plan => plan.id !== currentPlan.id);
+                plans.unshift(currentPlan);
+                localStorage.setItem(savedPlansKey, JSON.stringify(plans.slice(0, 30)));
+                renderSavedPlans();
+                document.getElementById("saved-status").textContent = "Plan saved in this browser.";
+                document.getElementById("save-plan-button").textContent = "Plan Saved";
+            } catch {
+                document.getElementById("saved-status").textContent = "Unable to save. Browser storage may be full or disabled.";
+            }
+        }
+
+        function loadSelectedPlan() {
+            const selectedId = document.getElementById("saved-plan-select").value;
+            currentPlan = readSavedPlans().find(plan => plan.id === selectedId) || null;
+            if (!currentPlan) return;
+            document.getElementById("planner").value = currentPlan.planner;
+            document.getElementById("budget").value = currentPlan.budget;
+            document.getElementById("details").value = currentPlan.details;
+            showResult(currentPlan);
+            document.getElementById("result-actions").hidden = false;
+            document.getElementById("save-plan-button").textContent = "Plan Saved";
+        }
+
+        function deleteSelectedPlan() {
+            const selectedId = document.getElementById("saved-plan-select").value;
+            if (!selectedId) return;
+            localStorage.setItem(savedPlansKey, JSON.stringify(readSavedPlans().filter(plan => plan.id !== selectedId)));
+            document.getElementById("saved-status").textContent = "Saved plan deleted.";
+            renderSavedPlans();
+        }
+
+        function downloadCurrentPlan() {
+            if (!currentPlan) return;
+            const blob = new Blob([JSON.stringify(currentPlan, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `pocketsmart-${currentPlan.planner.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function createPlanId() {
+            return globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        }
+
+        function escapeHtml(value) {
+            const element = document.createElement("span");
+            element.textContent = String(value ?? "");
+            return element.innerHTML;
+        }
+    </script>
+</body>
+</html>
